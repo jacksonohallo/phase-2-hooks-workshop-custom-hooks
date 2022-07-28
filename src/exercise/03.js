@@ -1,61 +1,78 @@
-import { useState, useEffect } from "react";
-import hasi from "../data/assets/hasi.png";
+import styled from "styled-components";
+import React, { useEffect, useState } from "react";
 
-export function useMouseCoordinates() {
-  // ✅ get the setCoordinates function back too!
-  // 👀 const [coordinates, setCoordinates] = useState(...)
-  const [coordinates] = useState({
-    clientX: 0,
-    clientY: 0,
-  });
+export function usePokemon(query) {
+  const [pokemon, setPokemon] = useState(null);
 
   useEffect(() => {
-    /* 
-     ✅ create an event handler function to run when the mousemove event fires
-     set state with the clientX and clientY coordinates from the event
-     👀 function handler(event) {}
-    */
+    fetch(`https://pokeapi.co/api/v2/pokemon/${query}`)
+      .then(r => r.json())
+      .then(setPokemon);
+  }, [query]);
 
-    /* 
-     ✅ attach an event listener to the window for the mousemove event
-     📃 https://developer.mozilla.org/en-US/docs/Web/API/Element/mousemove_event
-     👀 window.addEventListener("mousemove", handler)
-    */
-
-    return function cleanup() {
-      /* 
-       ✅ make sure to clean up your event listeners when your hook is no longer in use!
-       👀 window.removeEventListener("mousemove", handler)
-      */
-    };
-  }, []);
-
-  return coordinates;
+  return { data: pokemon };
 }
 
-export default function MyComponent() {
-  const { clientX, clientY } = useMouseCoordinates();
+function Pokemon({ query }) {
+  const { data: pokemon } = usePokemon(query);
+
+  // 🚫 don't worry about the code below here, you shouldn't have to touch it
+  if (!pokemon) return <h3>Loading...</h3>;
 
   return (
-    <div style={{ cursor: "none", width: "100%", height: "100%" }}>
-      <h2>Mouse X: {clientX}</h2>
-      <h2>Mouse Y: {clientY}</h2>
-      <Cursor x={clientX} y={clientY} />
+    <div>
+      <h3>{pokemon.name}</h3>
+      <img
+        src={pokemon.sprites.front_default}
+        alt={pokemon.name + " front sprite"}
+      />
     </div>
   );
 }
 
-function Cursor({ x, y }) {
-  const style = {
-    position: "fixed",
-    top: y,
-    left: x,
-    height: "45px",
-    width: "45px",
-    borderRadius: "50%",
-    background: `url(${hasi})`,
-    backgroundSize: "cover",
-    zIndex: 1,
-  };
-  return <div style={style} />;
+export default function App() {
+  const [query, setQuery] = useState("charmander");
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    setQuery(e.target.search.value);
+  }
+
+  return (
+    <Wrapper>
+      <h1>PokéSearcher</h1>
+      <Pokemon query={query} />
+      <form onSubmit={handleSubmit}>
+        <input type="text" name="search" defaultValue={query} />
+        <button type="submit">Search</button>
+      </form>
+    </Wrapper>
+  );
 }
+
+const Wrapper = styled.section`
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.15);
+  display: grid;
+  place-items: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  background: papayawhip;
+  text-align: center;
+
+  h1 {
+    background: #ef5350;
+    color: white;
+    display: block;
+    margin: 0;
+    padding: 1rem;
+    color: white;
+    font-size: 2rem;
+  }
+
+  form {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    width: 100%;
+  }
+`;
+
